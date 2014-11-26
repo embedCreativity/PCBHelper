@@ -269,6 +269,7 @@
      <string>File</string>
     </property>
     <addaction name="actionImport_BOM"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuConfig">
     <property name="title">
@@ -288,6 +289,11 @@
   <action name="actionSelect_Database">
    <property name="text">
     <string>Select Database</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>
