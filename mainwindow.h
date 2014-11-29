@@ -52,6 +52,14 @@ private slots:
 
     void on_actionSelect_Database_triggered();
 
+    void on_comboBox_type_currentIndexChanged(const QString &arg1);
+
+    void on_comboBox_value_currentIndexChanged(const QString &arg1);
+
+    void on_comboBox_package_currentIndexChanged(const QString &arg1);
+
+    void on_comboBox_tolerance_currentIndexChanged(const QString &arg1);
+
 private:
     void setVisiblePrimaryBrowseTabItems(LabelVisibilty);
     Ui::MainWindow *ui;
