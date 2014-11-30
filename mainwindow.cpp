@@ -12,22 +12,6 @@ DatabaseEntry::~DatabaseEntry(void)
 
 }
 
-/*
- * class DatabaseEntry
-{
-public:
-
-    // class functions
-
-    // data members
-    int id;
-    QString type;
-    QString value;
-    QString package;
-    QString tolerance;
-    QString partnum;
-    QString comments;
-};*/
 // sqlite callback
 int MainWindow::callback(void *db, int argc, char **argv, char **azColName){
     int i;
@@ -35,8 +19,6 @@ int MainWindow::callback(void *db, int argc, char **argv, char **azColName){
     QString Value;
     DatabaseEntry dbEntry;
     QList<DatabaseEntry> *pDbContents = (QList<DatabaseEntry>*)db;
-    // db = QVector dbContents
-    //fprintf(stderr, "%s: ", (const char*)data);
 
     for(i=0; i<argc; i++){
         //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
@@ -96,6 +78,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(false);
             ui->comboBox_value->setVisible(false);
             ui->txtComments->setVisible(false);
+            ui->toolBtnDelete->setVisible(false);
+            ui->tabWidget->setTabEnabled(1, false);
             break;
         case(TYPE):
             ui->lbl_helper->setVisible(false);
@@ -112,6 +96,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(true);
             ui->comboBox_value->setVisible(false);
             ui->txtComments->setVisible(false);
+            ui->toolBtnDelete->setVisible(false);
+            ui->tabWidget->setTabEnabled(1, true);
             break;
         case(VALUE):
             ui->lbl_helper->setVisible(false);
@@ -128,6 +114,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(true);
             ui->comboBox_value->setVisible(true);
             ui->txtComments->setVisible(false);
+            ui->toolBtnDelete->setVisible(false);
+            ui->tabWidget->setTabEnabled(1, true);
             break;
         case(PACKAGE):
             ui->lbl_helper->setVisible(false);
@@ -144,6 +132,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(true);
             ui->comboBox_value->setVisible(true);
             ui->txtComments->setVisible(false);
+            ui->toolBtnDelete->setVisible(false);
+            ui->tabWidget->setTabEnabled(1, true);
             break;
         case(TOLERANCE):
             ui->lbl_helper->setVisible(false);
@@ -160,6 +150,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(true);
             ui->comboBox_value->setVisible(true);
             ui->txtComments->setVisible(false);
+            ui->toolBtnDelete->setVisible(false);
+            ui->tabWidget->setTabEnabled(1, true);
             break;
         case(PARTNUM):
             ui->lbl_helper->setVisible(false);
@@ -176,6 +168,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->comboBox_type->setVisible(true);
             ui->comboBox_value->setVisible(true);
             ui->txtComments->setVisible(true);
+            ui->toolBtnDelete->setVisible(true);
+            ui->tabWidget->setTabEnabled(1, true);
             break;
     } // end switch
 }
@@ -201,60 +195,94 @@ void MainWindow::on_actionExit_triggered()
     exit(0);
 }
 
-void MainWindow::on_actionSelect_Database_triggered()
+bool MainWindow::UpdateDataFromDb(QString path)
 {
     int sqlReturn;
     int rc;
     char *zErrMsg = NULL;
 
-    do
+    if ( path == NULL )
     {
-        pathToSqlDb = QFileDialog::getOpenFileName(this, tr("Select Digikey Database"), "/home",
-           tr("Databases (*.sl3)"));
+        return false;
+    }
 
-        if ( pathToSqlDb == NULL )
-        {
-            break;
-        }
+    // set up handle to the sqlite database
+    sqlite3_close(connDB);
+    sqlReturn = sqlite3_open(path.toStdString().c_str(), &connDB);
+    if ( sqlReturn )
+    {
+        return false;
+    }
 
-        // set up handle to the sqlite database
+    /* Execute SQL statement */
+    rc = sqlite3_exec(connDB, "select * from parts", callback, &dbContents, &zErrMsg);
+    if( rc != SQLITE_OK ){
+        printf("SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
         sqlite3_close(connDB);
-        sqlReturn = sqlite3_open(pathToSqlDb.toStdString().c_str(), &connDB);
-        if ( sqlReturn )
-        {
-            continue;
-        }
+        return false;
+    }
 
-        /* Execute SQL statement */
-        rc = sqlite3_exec(connDB, "select * from parts", callback, &dbContents, &zErrMsg);
-        if( rc != SQLITE_OK ){
-            printf("SQL error: %s\n", zErrMsg);
-            sqlite3_free(zErrMsg);
-            sqlite3_close(connDB);
-            sqlReturn = 1; // force loop repeat
-        }else{
-            printf("Operation done successfully\n");
-            break;
-        }
-    } while ( sqlReturn );
+    // clean the boxes
+    int i;
+    for ( i = 0; ui->comboBox_type->count(); i++ ) {
+        ui->comboBox_type->removeItem(0);
+    }
+    for ( i = 0; ui->comboBox_add_type->count(); i++ ) {
+        ui->comboBox_add_type->removeItem(0);
+    }
+    for ( i = 0; ui->comboBox_add_package->count(); i++ ) {
+        ui->comboBox_add_package->removeItem(0);
+    }
 
-    QList<DatabaseEntry>::iterator i;
+    QList<DatabaseEntry>::iterator iter;
     ui->comboBox_type->addItem("");
+    ui->comboBox_add_type->addItem(""); // in add tab
+    ui->comboBox_add_package->addItem(""); // in add tab
     int typeIterator;
-    bool found = false;
-    for (i = dbContents.begin(); i != dbContents.end(); ++i) {
-        // only insert unique
+    int packageIterator; // add tab
+    bool typeFound = false;
+    bool packageFound = false; // add tab
+
+    // for each database entry
+    for (iter = dbContents.begin(); iter != dbContents.end(); ++iter) {
+
+        // look through current contents of comboBox
+        // type - only insert unique
+        typeFound = false; // init
         for ( typeIterator = 0; typeIterator < ui->comboBox_type->count(); typeIterator++ ) {
-            if ( (*i).type == ui->comboBox_type->itemText(typeIterator)) {
-                found = true;
+            if ( (*iter).type == ui->comboBox_type->itemText(typeIterator)) {
+                typeFound = true;
             }
         }
-        if ( ! found ) {
-            ui->comboBox_type->addItem((*i).type);
+        if ( ! typeFound ) {
+            ui->comboBox_type->addItem((*iter).type);
+            ui->comboBox_add_type->addItem((*iter).type);
+        }
+        // package - only insert unique
+        packageFound = false; // init
+        for ( packageIterator = 0; packageIterator < ui->comboBox_add_package->count(); packageIterator++ ) {
+            if ( (*iter).package == ui->comboBox_add_package->itemText(packageIterator)) {
+                packageFound = true;
+            }
+        }
+        if ( ! packageFound ) {
+            ui->comboBox_add_package->addItem((*iter).package);
         }
     }
     // Enable all items in form window
     setVisiblePrimaryBrowseTabItems(TYPE);
+
+    return true;
+}
+
+void MainWindow::on_actionSelect_Database_triggered()
+{
+    do
+    {
+        pathToSqlDb = QFileDialog::getOpenFileName(this, tr("Select Digikey Database"), "/home",
+           tr("Databases (*.sl3)"));
+    } while ( !UpdateDataFromDb(pathToSqlDb) );
 }
 
 void MainWindow::on_comboBox_type_currentIndexChanged(const QString &type)
@@ -272,25 +300,18 @@ void MainWindow::on_comboBox_type_currentIndexChanged(const QString &type)
     int valueIterator;
     bool found = false;
     for (iter = dbContents.begin(); iter != dbContents.end(); iter++) {
-        if ( (*iter).type != ui->comboBox_type->currentText() ) {
-            fprintf(stderr, "%s - type: %s != box: %s\n", __FUNCTION__,
-                    (*iter).type.toStdString().c_str(),
-                    ui->comboBox_type->currentText().toStdString().c_str());
+        if ( (*iter).type != type ) {
             continue;
         }
 
-        fprintf(stderr, "%s - type: %s == box: %s\n", __FUNCTION__,
-                (*iter).type.toStdString().c_str(),
-                ui->comboBox_type->currentText().toStdString().c_str());
-
         // only insert unique
+        found = false; // init
         for ( valueIterator = 0; valueIterator < ui->comboBox_value->count(); valueIterator++ ) {
             if ( (*iter).value == ui->comboBox_value->itemText(valueIterator) ) {
                 found = true;
             }
         }
         if ( ! found ) {
-            //
             ui->comboBox_value->addItem((*iter).value);
         }
     }
@@ -314,11 +335,12 @@ void MainWindow::on_comboBox_value_currentIndexChanged(const QString &value)
     int packageIterator;
     bool found = false;
     for (iter = dbContents.begin(); iter != dbContents.end(); iter++) {
-        if ( ((*iter).type != ui->comboBox_type->currentText()) || ((*iter).value != ui->comboBox_value->currentText()) ) {
+        if ( ((*iter).type != ui->comboBox_type->currentText()) || ((*iter).value != value) ) {
             continue;
         }
 
         // only insert unique
+        found = false; // init
         for ( packageIterator = 0; packageIterator < ui->comboBox_package->count(); packageIterator++ ) {
             if ( (*iter).package == ui->comboBox_package->itemText(packageIterator)) {
                 found = true;
@@ -350,12 +372,13 @@ void MainWindow::on_comboBox_package_currentIndexChanged(const QString &package)
     for (iter = dbContents.begin(); iter != dbContents.end(); iter++) {
         if ( ((*iter).type != ui->comboBox_type->currentText()) ||
              ((*iter).value != ui->comboBox_value->currentText()) ||
-             ((*iter).package != ui->comboBox_package->currentText()) )
+             ((*iter).package != package) )
         {
             continue;
         }
 
         // only insert unique
+        found = false; // init
         for ( toleranceIterator = 0; toleranceIterator < ui->comboBox_tolerance->count(); toleranceIterator++ ) {
             if ( (*iter).tolerance == ui->comboBox_tolerance->itemText(toleranceIterator)) {
                 found = true;
@@ -387,12 +410,13 @@ void MainWindow::on_comboBox_tolerance_currentIndexChanged(const QString &tolera
         if ( ((*iter).type != ui->comboBox_type->currentText()) ||
              ((*iter).value != ui->comboBox_value->currentText()) ||
              ((*iter).package != ui->comboBox_package->currentText()) ||
-             ((*iter).tolerance != ui->comboBox_tolerance->currentText()) )
+             ((*iter).tolerance != tolerance) )
         {
             continue;
         }
 
         // only insert unique
+        found = false; // init
         for ( partnumIterator = 0; partnumIterator < ui->comboBox_partnum->count(); partnumIterator++ ) {
             if ( (*iter).partnum == ui->comboBox_partnum->itemText(partnumIterator)) {
                 found = true;
@@ -406,4 +430,96 @@ void MainWindow::on_comboBox_tolerance_currentIndexChanged(const QString &tolera
 
     // Enable all items in form window
     setVisiblePrimaryBrowseTabItems(PARTNUM);
+}
+
+void MainWindow::on_toolBtnDelete_clicked()
+{
+
+}
+
+void MainWindow::on_btn_add_component_clicked()
+{
+    DatabaseEntry newPart = DatabaseEntry();
+
+    // Get type
+    if ( ui->comboBox_add_type->currentText() != "" ) {
+        newPart.type = ui->comboBox_add_type->currentText();
+    } else if ( ui->edit_new_type->text() == "" ) { // error check
+        return;
+    } else {
+        newPart.type = ui->edit_new_type->text();
+    }
+    // Get package
+    if ( ui->comboBox_add_package->currentText() != "" ) {
+        newPart.package = ui->comboBox_add_package->currentText();
+    } else if ( ui->edit_new_package->text() == "" ) { // error check
+        return;
+    } else {
+        newPart.package = ui->edit_new_package->text();
+    }
+    // Get value
+    if ( ui->edit_value->text() == "" ) { // error check
+        return;
+    } else {
+        newPart.value = ui->edit_value->text();
+    }
+    // Get tolerance
+    if ( ui->edit_tolerance->text() == "" ) { // error check
+        return;
+    } else {
+        newPart.tolerance = ui->edit_tolerance->text();
+    }
+    // Get partnum
+    if ( ui->edit_partnum->text() == "" ) { // error check
+        return;
+    } else {
+        newPart.partnum = ui->edit_partnum->text();
+    }
+    // Get comments
+    newPart.comments = ui->edit_comments->toPlainText();
+
+    int sqlReturn;
+    int rc;
+    char *zErrMsg = NULL;
+
+    sqlReturn = sqlite3_open(pathToSqlDb.toStdString().c_str(), &connDB);
+    if ( sqlReturn )
+    {
+        return;
+    }
+
+    /* Execute SQL statement */
+    QString sqlCmd = "insert into parts (type, value, package, tolerance, partnum, comments) values (\"" +
+            newPart.type + "\", \"" + newPart.value + "\", \"" + newPart.package + "\", \"" + newPart.tolerance +
+            "\", \"" + newPart.partnum + "\", \"" + newPart.comments + "\");";
+    if ( SQLITE_OK != sqlite3_exec (connDB, "BEGIN", NULL, NULL, NULL) ) {
+        return;
+    }
+    rc = sqlite3_exec(connDB, sqlCmd.toStdString().c_str(), NULL, NULL, &zErrMsg);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        sqlite3_close(connDB);
+        sqlReturn = 1; // force loop repeat
+    }
+    if ( SQLITE_OK != sqlite3_exec (connDB, "COMMIT", NULL, NULL, NULL) ) {
+        return;
+    }
+    sqlite3_close(connDB);
+
+    UpdateDataFromDb(pathToSqlDb);
+}
+
+void MainWindow::on_tabWidget_tabBarClicked(int index)
+{
+    if ( index == 1 ) { // Add tab
+        ui->edit_new_package->clear();
+        ui->edit_new_type->clear();
+        ui->edit_comments->clear();
+        ui->edit_partnum->clear();
+        ui->edit_tolerance->clear();
+        ui->edit_value->clear();
+        ui->comboBox_add_package->setCurrentIndex(0);
+        ui->comboBox_add_type->setCurrentIndex(0);
+    }
 }

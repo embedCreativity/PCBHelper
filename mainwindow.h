@@ -60,6 +60,12 @@ private slots:
 
     void on_comboBox_tolerance_currentIndexChanged(const QString &arg1);
 
+    void on_toolBtnDelete_clicked();
+
+    void on_btn_add_component_clicked();
+
+    void on_tabWidget_tabBarClicked(int index);
+
 private:
     void setVisiblePrimaryBrowseTabItems(LabelVisibilty);
     Ui::MainWindow *ui;
@@ -69,6 +75,8 @@ private:
 
     // sqlite callback
     static int callback(void *data, int argc, char **argv, char **azColName);
+
+    bool UpdateDataFromDb(QString path);
 };
 
 #endif // MAINWINDOW_H

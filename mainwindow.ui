@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="Browse">
      <attribute name="title">
@@ -194,12 +194,25 @@
        <string>Please Select Database from Config Menu</string>
       </property>
      </widget>
+     <widget class="QToolButton" name="toolBtnDelete">
+      <property name="geometry">
+       <rect>
+        <x>700</x>
+        <y>140</y>
+        <width>24</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>...</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Add">
      <attribute name="title">
       <string>Add</string>
      </attribute>
-     <widget class="QLineEdit" name="lineEdit">
+     <widget class="QLineEdit" name="edit_value">
       <property name="geometry">
        <rect>
         <x>70</x>
@@ -209,7 +222,7 @@
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_4">
+     <widget class="QLineEdit" name="edit_partnum">
       <property name="geometry">
        <rect>
         <x>480</x>
@@ -232,7 +245,7 @@
        <string>Add</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="btn_add_component">
       <property name="geometry">
        <rect>
         <x>710</x>
@@ -245,7 +258,7 @@
        <string>Add</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_3">
+     <widget class="QLineEdit" name="edit_tolerance">
       <property name="geometry">
        <rect>
         <x>360</x>
@@ -255,7 +268,7 @@
        </rect>
       </property>
      </widget>
-     <widget class="QTextEdit" name="textEdit">
+     <widget class="QTextEdit" name="edit_comments">
       <property name="geometry">
        <rect>
         <x>120</x>
@@ -278,11 +291,11 @@
        <string>Comments</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_2">
+     <widget class="QLineEdit" name="edit_new_package">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>100</y>
+        <x>610</x>
+        <y>30</y>
         <width>113</width>
         <height>27</height>
        </rect>
@@ -293,12 +306,12 @@
        <rect>
         <x>20</x>
         <y>30</y>
-        <width>121</width>
-        <height>17</height>
+        <width>91</width>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>Component Type</string>
+       <string>Existing Type</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_29">
@@ -330,53 +343,40 @@
      <widget class="QLabel" name="label_31">
       <property name="geometry">
        <rect>
-        <x>210</x>
-        <y>80</y>
-        <width>67</width>
+        <x>610</x>
+        <y>10</y>
+        <width>91</width>
         <height>17</height>
        </rect>
       </property>
       <property name="text">
-       <string>Package</string>
+       <string>New Package</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox_16">
+     <widget class="QComboBox" name="comboBox_add_type">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>120</x>
         <y>30</y>
         <width>121</width>
         <height>27</height>
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_13">
+     <widget class="QLineEdit" name="edit_new_type">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>250</x>
         <y>30</y>
         <width>81</width>
         <height>27</height>
        </rect>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_4">
-      <property name="geometry">
-       <rect>
-        <x>390</x>
-        <y>30</y>
-        <width>101</width>
-        <height>27</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Add Type</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_32">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>250</x>
         <y>10</y>
         <width>67</width>
         <height>17</height>
@@ -399,173 +399,27 @@
        <string>Digikey P/N</string>
       </property>
      </widget>
-    </widget>
-    <widget class="QWidget" name="Remove">
-     <attribute name="title">
-      <string>Remove</string>
-     </attribute>
-     <widget class="QLabel" name="label_10">
+     <widget class="QComboBox" name="comboBox_add_package">
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>60</y>
-        <width>67</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Value</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboBox_6">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>20</y>
+        <x>480</x>
+        <y>30</y>
         <width>121</width>
         <height>27</height>
        </rect>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox_7">
+     <widget class="QLabel" name="label_34">
       <property name="geometry">
        <rect>
-        <x>60</x>
-        <y>80</y>
+        <x>360</x>
+        <y>30</y>
         <width>121</width>
-        <height>27</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_11">
-      <property name="geometry">
-       <rect>
-        <x>350</x>
-        <y>60</y>
-        <width>141</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>Precision/Tolerance</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboBox_8">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>80</y>
-        <width>111</width>
-        <height>27</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QTextBrowser" name="textBrowser_2">
-      <property name="geometry">
-       <rect>
-        <x>110</x>
-        <y>110</y>
-        <width>561</width>
-        <height>61</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_12">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>120</y>
-        <width>81</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Comments</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboBox_9">
-      <property name="geometry">
-       <rect>
-        <x>350</x>
-        <y>80</y>
-        <width>85</width>
-        <height>27</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_13">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>60</y>
-        <width>67</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Package</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_14">
-      <property name="geometry">
-       <rect>
-        <x>520</x>
-        <y>60</y>
-        <width>91</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Digikey P/N</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_15">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>20</y>
-        <width>121</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Component Type</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboBox_10">
-      <property name="geometry">
-       <rect>
-        <x>520</x>
-        <y>80</y>
-        <width>201</width>
-        <height>27</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_16">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>80</y>
-        <width>67</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Select</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>190</y>
-        <width>99</width>
-        <height>27</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Remove</string>
+       <string>Existing Package</string>
       </property>
      </widget>
     </widget>
