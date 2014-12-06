@@ -523,3 +523,31 @@ void MainWindow::on_tabWidget_tabBarClicked(int index)
         ui->comboBox_add_type->setCurrentIndex(0);
     }
 }
+
+void MainWindow::on_actionImport_BOM_triggered()
+{
+    pathToEagleBom = QFileDialog::getOpenFileName(this, tr("Select Eagle BOM File"), "/home",
+       tr("Databases (*.bom)"));
+
+    // open file and process it
+
+/*  Go from this format.......
+    Part Value                           Device                          Package           Description
+    C1   0.33uF                          CAP-S0402S                      C0402S            Capacitor
+    C2   10uF                            CAP-S0805S                      C0805S            Capacitor
+    C3   220nF                           CAP-S0402S                      C0402S            Capacitor
+    C4   18pF                            CAP-S0402P                      C0402P            Capacitor
+    C5   18pF                            CAP-S0402P                      C0402P            Capacitor
+
+    To this format.............
+1,445-8019-1-ND,C1
+1,445-5984-1-ND,C2
+1,445-7363-1-ND,C3
+1,445-5587-1-ND,C4
+1,445-5587-1-ND,C5
+1,490-4762-1-ND,C6
+1,718-1362-1-ND,C7
+1,445-5984-1-ND,C8
+*/
+
+}

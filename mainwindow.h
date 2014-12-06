@@ -66,11 +66,14 @@ private slots:
 
     void on_tabWidget_tabBarClicked(int index);
 
+    void on_actionImport_BOM_triggered();
+
 private:
     void setVisiblePrimaryBrowseTabItems(LabelVisibilty);
     Ui::MainWindow *ui;
     sqlite3 *connDB; // connection object to database
     QString pathToSqlDb;
+    QString pathToEagleBom;
     QList<DatabaseEntry> dbContents;
 
     // sqlite callback
