@@ -207,6 +207,35 @@
        <string>...</string>
       </property>
      </widget>
+     <widget class="QLabel" name="lbl_disp_eagle_prefix">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>180</y>
+        <width>81</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Eagle Prefix</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lbl_eagle_prefix">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>180</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::PreventContextMenu</enum>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Add">
      <attribute name="title">
@@ -216,7 +245,7 @@
       <property name="geometry">
        <rect>
         <x>70</x>
-        <y>100</y>
+        <y>140</y>
         <width>113</width>
         <height>27</height>
        </rect>
@@ -225,8 +254,8 @@
      <widget class="QLineEdit" name="edit_partnum">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>100</y>
+        <x>330</x>
+        <y>140</y>
         <width>201</width>
         <height>27</height>
        </rect>
@@ -236,7 +265,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>100</y>
+        <y>140</y>
         <width>41</width>
         <height>17</height>
        </rect>
@@ -248,8 +277,8 @@
      <widget class="QPushButton" name="btn_add_component">
       <property name="geometry">
        <rect>
-        <x>710</x>
-        <y>100</y>
+        <x>560</x>
+        <y>140</y>
         <width>61</width>
         <height>27</height>
        </rect>
@@ -261,8 +290,8 @@
      <widget class="QLineEdit" name="edit_tolerance">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>100</y>
+        <x>210</x>
+        <y>140</y>
         <width>81</width>
         <height>27</height>
        </rect>
@@ -272,7 +301,7 @@
       <property name="geometry">
        <rect>
         <x>120</x>
-        <y>140</y>
+        <y>180</y>
         <width>561</width>
         <height>61</height>
        </rect>
@@ -282,7 +311,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>150</y>
+        <y>190</y>
         <width>81</width>
         <height>17</height>
        </rect>
@@ -294,8 +323,8 @@
      <widget class="QLineEdit" name="edit_new_package">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>30</y>
+        <x>260</x>
+        <y>80</y>
         <width>113</width>
         <height>27</height>
        </rect>
@@ -304,7 +333,7 @@
      <widget class="QLabel" name="label_28">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>30</y>
         <width>91</width>
         <height>20</height>
@@ -317,8 +346,8 @@
      <widget class="QLabel" name="label_29">
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>80</y>
+        <x>180</x>
+        <y>120</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -331,7 +360,7 @@
       <property name="geometry">
        <rect>
         <x>70</x>
-        <y>80</y>
+        <y>120</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -343,8 +372,8 @@
      <widget class="QLabel" name="label_31">
       <property name="geometry">
        <rect>
-        <x>610</x>
-        <y>10</y>
+        <x>260</x>
+        <y>60</y>
         <width>91</width>
         <height>17</height>
        </rect>
@@ -356,7 +385,7 @@
      <widget class="QComboBox" name="comboBox_add_type">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>130</x>
         <y>30</y>
         <width>121</width>
         <height>27</height>
@@ -366,7 +395,7 @@
      <widget class="QLineEdit" name="edit_new_type">
       <property name="geometry">
        <rect>
-        <x>250</x>
+        <x>260</x>
         <y>30</y>
         <width>81</width>
         <height>27</height>
@@ -376,7 +405,7 @@
      <widget class="QLabel" name="label_32">
       <property name="geometry">
        <rect>
-        <x>250</x>
+        <x>260</x>
         <y>10</y>
         <width>67</width>
         <height>17</height>
@@ -389,8 +418,8 @@
      <widget class="QLabel" name="label_33">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>80</y>
+        <x>330</x>
+        <y>120</y>
         <width>91</width>
         <height>17</height>
        </rect>
@@ -402,8 +431,8 @@
      <widget class="QComboBox" name="comboBox_add_package">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>30</y>
+        <x>130</x>
+        <y>80</y>
         <width>121</width>
         <height>27</height>
        </rect>
@@ -412,14 +441,37 @@
      <widget class="QLabel" name="label_34">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>30</y>
+        <x>10</x>
+        <y>80</y>
         <width>121</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
        <string>Existing Package</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lbl_disp_new_eagle_prefix">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>10</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Eagle Prefix</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="edit_prefix">
+      <property name="geometry">
+       <rect>
+        <x>364</x>
+        <y>30</y>
+        <width>51</width>
+        <height>27</height>
+       </rect>
       </property>
      </widget>
     </widget>

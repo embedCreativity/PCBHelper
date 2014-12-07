@@ -12,13 +12,24 @@ DatabaseEntry::~DatabaseEntry(void)
 
 }
 
+SqlCallbackContainer::SqlCallbackContainer(void)
+{
+
+}
+
+SqlCallbackContainer::~SqlCallbackContainer(void)
+{
+
+}
+
 // sqlite callback
-int MainWindow::callback(void *db, int argc, char **argv, char **azColName){
+int MainWindow::callback(void *container, int argc, char **argv, char **azColName){
     int i;
     QString ColName;
     QString Value;
     DatabaseEntry dbEntry;
-    QList<DatabaseEntry> *pDbContents = (QList<DatabaseEntry>*)db;
+    QList<DatabaseEntry> *pDbContents = ((SqlCallbackContainer *)container)->pDbContents;
+    QHash<QString,QString> *pPrefixLookup = ((SqlCallbackContainer *)container)->pPrefixLookup;
 
     for(i=0; i<argc; i++){
         //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
@@ -53,7 +64,26 @@ int MainWindow::callback(void *db, int argc, char **argv, char **azColName){
         {
             dbEntry.comments = Value;
         }
+        else if ( ColName == "prefix" )
+        {
+            dbEntry.prefix= Value;
+        }
     } // end for
+
+    // Check for uniqueness of eagle prefix per type
+    if (  pPrefixLookup->contains(dbEntry.type) )
+    {
+        if (dbEntry.prefix != pPrefixLookup->value(dbEntry.type))
+        {
+            // oh shit!  What to do?
+            printf("oh shit. %s type with prefix %s does not match expected prefix of %s\n", dbEntry.type.toStdString().c_str(),
+                   dbEntry.prefix.toStdString().c_str(), pPrefixLookup->value(dbEntry.type).toStdString().c_str());
+        }
+    }
+    else // dictionary not populated with value for given type yet. Let's add it
+    {
+        (*pPrefixLookup)[dbEntry.type] = dbEntry.prefix;
+    }
 
     pDbContents->push_back(dbEntry);
     return 0;
@@ -80,6 +110,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(false);
             ui->toolBtnDelete->setVisible(false);
             ui->tabWidget->setTabEnabled(1, false);
+            ui->lbl_disp_eagle_prefix->setVisible(false);
+            ui->lbl_eagle_prefix->setVisible(false);
             break;
         case(TYPE):
             ui->lbl_helper->setVisible(false);
@@ -98,6 +130,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(false);
             ui->toolBtnDelete->setVisible(false);
             ui->tabWidget->setTabEnabled(1, true);
+            ui->lbl_disp_eagle_prefix->setVisible(false);
+            ui->lbl_eagle_prefix->setVisible(false);
             break;
         case(VALUE):
             ui->lbl_helper->setVisible(false);
@@ -116,6 +150,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(false);
             ui->toolBtnDelete->setVisible(false);
             ui->tabWidget->setTabEnabled(1, true);
+            ui->lbl_disp_eagle_prefix->setVisible(false);
+            ui->lbl_eagle_prefix->setVisible(false);
             break;
         case(PACKAGE):
             ui->lbl_helper->setVisible(false);
@@ -134,6 +170,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(false);
             ui->toolBtnDelete->setVisible(false);
             ui->tabWidget->setTabEnabled(1, true);
+            ui->lbl_disp_eagle_prefix->setVisible(false);
+            ui->lbl_eagle_prefix->setVisible(false);
             break;
         case(TOLERANCE):
             ui->lbl_helper->setVisible(false);
@@ -152,6 +190,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(false);
             ui->toolBtnDelete->setVisible(false);
             ui->tabWidget->setTabEnabled(1, true);
+            ui->lbl_disp_eagle_prefix->setVisible(false);
+            ui->lbl_eagle_prefix->setVisible(false);
             break;
         case(PARTNUM):
             ui->lbl_helper->setVisible(false);
@@ -170,6 +210,8 @@ void MainWindow::setVisiblePrimaryBrowseTabItems(LabelVisibilty visibility)
             ui->txtComments->setVisible(true);
             ui->toolBtnDelete->setVisible(true);
             ui->tabWidget->setTabEnabled(1, true);
+            ui->lbl_disp_eagle_prefix->setVisible(true);
+            ui->lbl_eagle_prefix->setVisible(true);
             break;
     } // end switch
 }
@@ -180,6 +222,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setVisiblePrimaryBrowseTabItems(HELPER);
+
+    sqlContainer.pDbContents = &dbContents;
+    sqlContainer.pPrefixLookup = &PrefixLookup;
 }
 
 MainWindow::~MainWindow()
@@ -215,7 +260,7 @@ bool MainWindow::UpdateDataFromDb(QString path)
     }
 
     /* Execute SQL statement */
-    rc = sqlite3_exec(connDB, "select * from parts", callback, &dbContents, &zErrMsg);
+    rc = sqlite3_exec(connDB, "select * from parts", callback, &sqlContainer, &zErrMsg);
     if( rc != SQLITE_OK ){
         printf("SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
@@ -426,6 +471,7 @@ void MainWindow::on_comboBox_tolerance_currentIndexChanged(const QString &tolera
             ui->comboBox_partnum->addItem((*iter).partnum);
         }
         ui->txtComments->setText((*iter).comments);
+        ui->lbl_eagle_prefix->setText((*iter).prefix);
     }
 
     // Enable all items in form window
@@ -478,6 +524,15 @@ void MainWindow::on_btn_add_component_clicked()
     // Get comments
     newPart.comments = ui->edit_comments->toPlainText();
 
+    // Get prefix
+    if ( (ui->edit_prefix->text() == "") && (!PrefixLookup.contains(newPart.type)) ) { // error check
+        return;
+    } else if ( PrefixLookup.contains(newPart.type) ) {  // get prefix from dictionary
+        newPart.prefix = PrefixLookup.value(newPart.type);
+    } else {                                            // get prefix from line edit box
+        newPart.prefix = ui->edit_prefix->text();
+    }
+
     int sqlReturn;
     int rc;
     char *zErrMsg = NULL;
@@ -489,9 +544,9 @@ void MainWindow::on_btn_add_component_clicked()
     }
 
     /* Execute SQL statement */
-    QString sqlCmd = "insert into parts (type, value, package, tolerance, partnum, comments) values (\"" +
+    QString sqlCmd = "insert into parts (type, value, package, tolerance, partnum, comments, prefix) values (\"" +
             newPart.type + "\", \"" + newPart.value + "\", \"" + newPart.package + "\", \"" + newPart.tolerance +
-            "\", \"" + newPart.partnum + "\", \"" + newPart.comments + "\");";
+            "\", \"" + newPart.partnum + "\", \"" + newPart.comments + "\", \"" + newPart.prefix + "\");";
     if ( SQLITE_OK != sqlite3_exec (connDB, "BEGIN", NULL, NULL, NULL) ) {
         return;
     }
@@ -508,6 +563,14 @@ void MainWindow::on_btn_add_component_clicked()
     sqlite3_close(connDB);
 
     UpdateDataFromDb(pathToSqlDb);
+
+    ui->edit_new_package->clear();
+    ui->edit_new_type->clear();
+    ui->edit_prefix->clear();
+    ui->edit_value->clear();
+    ui->edit_tolerance->clear();
+    ui->edit_partnum->clear();
+    ui->edit_comments->clear();
 }
 
 void MainWindow::on_tabWidget_tabBarClicked(int index)
@@ -516,9 +579,12 @@ void MainWindow::on_tabWidget_tabBarClicked(int index)
         ui->edit_new_package->clear();
         ui->edit_new_type->clear();
         ui->edit_comments->clear();
+        ui->edit_prefix->clear();
         ui->edit_partnum->clear();
         ui->edit_tolerance->clear();
         ui->edit_value->clear();
+        ui->lbl_disp_new_eagle_prefix->setVisible(false);
+        ui->edit_prefix->setVisible(false);
         ui->comboBox_add_package->setCurrentIndex(0);
         ui->comboBox_add_type->setCurrentIndex(0);
     }
@@ -527,7 +593,7 @@ void MainWindow::on_tabWidget_tabBarClicked(int index)
 void MainWindow::on_actionImport_BOM_triggered()
 {
     pathToEagleBom = QFileDialog::getOpenFileName(this, tr("Select Eagle BOM File"), "/home",
-       tr("Databases (*.bom)"));
+       tr("Eagle BOM (*.bom)"));
 
     // open file and process it
 
@@ -550,4 +616,33 @@ void MainWindow::on_actionImport_BOM_triggered()
 1,445-5984-1-ND,C8
 */
 
+    QFile file(pathToEagleBom);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return;
+    }
+
+    while (!file.atEnd())
+    {
+        QString line = file.readLine();
+        printf("%s\n", line.toStdString().c_str());
+    }
+
 }
+
+void MainWindow::on_edit_new_type_editingFinished()
+{
+    ui->lbl_disp_new_eagle_prefix->setVisible(true);
+    ui->edit_prefix->setVisible(true);
+
+}
+
+void MainWindow::on_comboBox_add_type_activated(const QString &foo)
+{
+    (void)foo; // silence warning about unused param
+    ui->edit_prefix->clear();
+    ui->lbl_disp_new_eagle_prefix->setVisible(false);
+    ui->edit_prefix->setVisible(false);
+    ui->edit_new_type->clear();
+}
+

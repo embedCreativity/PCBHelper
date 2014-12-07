@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <sqlite3.h>
 #include <QList>
+#include <QFile>
+#include <QHash>
 
 namespace Ui {
 class DatabaseEntry;
@@ -28,6 +30,20 @@ public:
     QString tolerance;
     QString partnum;
     QString comments;
+    QString prefix;
+};
+
+class SqlCallbackContainer
+{
+public:
+
+    // class functions
+    SqlCallbackContainer();
+    ~SqlCallbackContainer();
+
+    // data members
+    QList<DatabaseEntry> *pDbContents;
+    QHash<QString,QString> *pPrefixLookup;
 };
 
 class MainWindow : public QMainWindow
@@ -68,6 +84,10 @@ private slots:
 
     void on_actionImport_BOM_triggered();
 
+    void on_comboBox_add_type_activated(const QString &arg1);
+
+    void on_edit_new_type_editingFinished();
+
 private:
     void setVisiblePrimaryBrowseTabItems(LabelVisibilty);
     Ui::MainWindow *ui;
@@ -75,6 +95,8 @@ private:
     QString pathToSqlDb;
     QString pathToEagleBom;
     QList<DatabaseEntry> dbContents;
+    QHash<QString,QString> PrefixLookup;
+    SqlCallbackContainer sqlContainer;
 
     // sqlite callback
     static int callback(void *data, int argc, char **argv, char **azColName);
