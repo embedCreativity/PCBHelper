@@ -133,6 +133,8 @@ private slots:
 
     void on_edit_new_type_editingFinished();
 
+    void on_actionCreate_New_Database_triggered();
+
 private:
     void setVisiblePrimaryBrowseTabItems(LabelVisibilty);
     Ui::MainWindow *ui;

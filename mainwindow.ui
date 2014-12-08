@@ -498,6 +498,7 @@
      <string>Config</string>
     </property>
     <addaction name="actionSelect_Database"/>
+    <addaction name="actionCreate_New_Database"/>
    </widget>
    <addaction name="menuPCB_Helper"/>
    <addaction name="menuConfig"/>
@@ -516,6 +517,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionCreate_New_Database">
+   <property name="text">
+    <string>Create New Database</string>
    </property>
   </action>
  </widget>

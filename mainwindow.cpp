@@ -201,6 +201,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setVisiblePrimaryBrowseTabItems(HELPER);
+    ui->actionImport_BOM->setDisabled(true);
 
     sqlContainer.pDbContents = &dbContents;
     sqlContainer.pPrefixLookup = &PrefixLookup;
@@ -306,8 +307,15 @@ void MainWindow::on_actionSelect_Database_triggered()
     {
         pathToSqlDb = QFileDialog::getOpenFileName(this, tr("Select Digikey Database"), "/home",
            tr("Databases (*.sl3)"));
+        if (pathToSqlDb == NULL) // user hit "Cancel" button
+        {
+            return;
+        }
     } while ( !UpdateDataFromDb(pathToSqlDb) );
     ui->actionSelect_Database->setDisabled(true);
+    ui->actionImport_BOM->setEnabled(true);
+    ui->actionSelect_Database->setDisabled(true);
+    ui->actionCreate_New_Database->setDisabled(true);
 }
 
 void MainWindow::on_comboBox_type_currentIndexChanged(const QString &type)
@@ -576,26 +584,6 @@ void MainWindow::on_actionImport_BOM_triggered()
        tr("Eagle BOM (*.bom)"));
 
     // open file and process it
-
-/*  Go from this format.......
-    Part Value                           Device                          Package           Description
-    C1   0.33uF                          CAP-S0402S                      C0402S            Capacitor
-    C2   10uF                            CAP-S0805S                      C0805S            Capacitor
-    C3   220nF                           CAP-S0402S                      C0402S            Capacitor
-    C4   18pF                            CAP-S0402P                      C0402P            Capacitor
-    C5   18pF                            CAP-S0402P                      C0402P            Capacitor
-
-    To this format.............
-1,445-8019-1-ND,C1
-1,445-5984-1-ND,C2
-1,445-7363-1-ND,C3
-1,445-5587-1-ND,C4
-1,445-5587-1-ND,C5
-1,490-4762-1-ND,C6
-1,718-1362-1-ND,C7
-1,445-5984-1-ND,C8
-*/
-
     QFile file(pathToEagleBom);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -648,11 +636,8 @@ void MainWindow::on_actionImport_BOM_triggered()
 
         if ( 1 != sscanf(strPartNumber, "%d", &partNumber) )
         {
-            //printf("failed to get number from string: %s\n", strPartNumber);
             continue;
         }
-
-        //printf("part: %s, id: %d, prefix: %s, value: %s, package: %s\n\n", part, partNumber, prefix, value, package);
 
         // stick the part into our list
         EaglePart part;
@@ -663,46 +648,10 @@ void MainWindow::on_actionImport_BOM_triggered()
         eaglePartsList.append(part);
     } // end while
 
-    // TODO: Need to see if multiple tolerances are found for each matching part.
-    // TODO: Group parts like C1,C5,C6 that are the same, but make a note if multiple tolerances are found
-
-    /*
-     * class DatabaseEntry
-    {
-    public:
-
-        // class functions
-        DatabaseEntry();
-        ~DatabaseEntry();
-
-        // data members
-        int id;
-        QString type;
-        QString value;
-        QString package;
-        QString tolerance;
-        QString partnum;
-        QString comments;
-        QString prefix;
-    };
-    QList<DatabaseEntry> dbContents;
-    C5   18pF                            CAP-S0402P                      C0402P            Capacitor
-    1,718-1362-1-ND,C7
-    1,445-5984-1-ND,C8
-    */
-
     QList<DatabaseEntry>::iterator dbIterator;
     QList<EaglePart>::iterator eagleIterator;
     bool reject;
     QList<DigikeyBOMPart> BomPartList;
-
-    // DEBUG
-//    for ( dbIterator = dbContents.begin(); dbIterator != dbContents.end(); ++dbIterator )
-//    {
-//        printf("value: %s\n", dbIterator->value.toStdString().c_str());
-//    }
-//    printf("\n\n");
-
 
     for (eagleIterator = eaglePartsList.begin(); eagleIterator != eaglePartsList.end(); ++eagleIterator ) // for each part we found
     {
@@ -773,9 +722,14 @@ void MainWindow::on_actionImport_BOM_triggered()
                 printf("1,%s,%s\n", digiBomPart.partNumToleranceList.digiKeyPartNumberList.last().toStdString().c_str(), digiBomPart.partName.toStdString().c_str());
             }
         }
-    }
-
+    } // end for each eagle part in bom...
     file.close();
+
+    // TODO: Group parts like C1,C5,C6 that are the same, but make a note if multiple tolerances are found
+
+
+
+
     printf("Done processing file...\n");
 }
 
@@ -795,3 +749,8 @@ void MainWindow::on_comboBox_add_type_activated(const QString &foo)
     ui->edit_new_type->clear();
 }
 
+
+void MainWindow::on_actionCreate_New_Database_triggered()
+{
+    //CREATE TABLE parts (id integer primary key, type text, value text, package text, tolerance text, partnum text, comments text, prefix text);
+}
