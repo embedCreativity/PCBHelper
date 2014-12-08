@@ -1,27 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
-DatabaseEntry::DatabaseEntry(void)
-{
-
-}
-
-DatabaseEntry::~DatabaseEntry(void)
-{
-
-}
-
-SqlCallbackContainer::SqlCallbackContainer(void)
-{
-
-}
-
-SqlCallbackContainer::~SqlCallbackContainer(void)
-{
-
-}
-
 // sqlite callback
 int MainWindow::callback(void *container, int argc, char **argv, char **azColName){
     int i;
@@ -328,6 +307,7 @@ void MainWindow::on_actionSelect_Database_triggered()
         pathToSqlDb = QFileDialog::getOpenFileName(this, tr("Select Digikey Database"), "/home",
            tr("Databases (*.sl3)"));
     } while ( !UpdateDataFromDb(pathToSqlDb) );
+    ui->actionSelect_Database->setDisabled(true);
 }
 
 void MainWindow::on_comboBox_type_currentIndexChanged(const QString &type)
@@ -622,12 +602,181 @@ void MainWindow::on_actionImport_BOM_triggered()
         return;
     }
 
+    char part[64];
+    char value[64];
+    char device[64]; // we won't use this
+    char package[64];
+    char strPartNumber[64];
+    int partNumber;
+    char prefix[64];
+    QString qvalue;
+    QString qpackage;
+    int i;
+    int j;
+    int k;
+
     while (!file.atEnd())
     {
         QString line = file.readLine();
-        printf("%s\n", line.toStdString().c_str());
+        char *cLine = strdup(line.toStdString().c_str()); // copy QString to c string
+        // for each line in BOM...
+
+        if ( 4 != sscanf(cLine, "%s %s %s %s", part, value, device, package)) { // error check
+            printf("error - sscanf\n");
+            free(cLine);
+            continue;
+        }
+
+        free(cLine);
+
+        // fill strings with NULL
+        memset(strPartNumber, 0, 64);
+        memset(prefix, 0, 64);
+
+        for (i = 0, j = 0, k = 0; part[i] != '\0'; i++ )
+        {
+            if ( (('a' <= part[i]) && (part[i] <= 'z')) || (('A' <= part[i]) && (part[i] <= 'Z')) || part[i] == '\0' ) // pull part type out of name
+            {
+                prefix[j] = part[i];
+                j += 1;
+            } else if ( ('1' <= part[i]) || (part[i] <= '9') ) // pull part number out of name
+            {
+                strPartNumber[k] = part[i];
+                k += 1;
+            }
+        }
+
+        if ( 1 != sscanf(strPartNumber, "%d", &partNumber) )
+        {
+            //printf("failed to get number from string: %s\n", strPartNumber);
+            continue;
+        }
+
+        //printf("part: %s, id: %d, prefix: %s, value: %s, package: %s\n\n", part, partNumber, prefix, value, package);
+
+        // stick the part into our list
+        EaglePart part;
+        part.identifier = partNumber;
+        part.prefix = prefix;
+        part.value = value;
+        part.package = package;
+        eaglePartsList.append(part);
+    } // end while
+
+    // TODO: Need to see if multiple tolerances are found for each matching part.
+    // TODO: Group parts like C1,C5,C6 that are the same, but make a note if multiple tolerances are found
+
+    /*
+     * class DatabaseEntry
+    {
+    public:
+
+        // class functions
+        DatabaseEntry();
+        ~DatabaseEntry();
+
+        // data members
+        int id;
+        QString type;
+        QString value;
+        QString package;
+        QString tolerance;
+        QString partnum;
+        QString comments;
+        QString prefix;
+    };
+    QList<DatabaseEntry> dbContents;
+    C5   18pF                            CAP-S0402P                      C0402P            Capacitor
+    1,718-1362-1-ND,C7
+    1,445-5984-1-ND,C8
+    */
+
+    QList<DatabaseEntry>::iterator dbIterator;
+    QList<EaglePart>::iterator eagleIterator;
+    bool reject;
+    QList<DigikeyBOMPart> BomPartList;
+
+    // DEBUG
+//    for ( dbIterator = dbContents.begin(); dbIterator != dbContents.end(); ++dbIterator )
+//    {
+//        printf("value: %s\n", dbIterator->value.toStdString().c_str());
+//    }
+//    printf("\n\n");
+
+
+    for (eagleIterator = eaglePartsList.begin(); eagleIterator != eaglePartsList.end(); ++eagleIterator ) // for each part we found
+    {
+        DigikeyBOMPart digiBomPart; // one for each part we found
+        char partName[64]; // prep a handy name
+        snprintf(partName, 64, "%s%d", eagleIterator->prefix.toStdString().c_str(), eagleIterator->identifier);
+        reject = true;  // init
+
+        for ( dbIterator = dbContents.begin(); dbIterator != dbContents.end(); ++dbIterator ) // look in our database for a match
+        {
+            if ( eagleIterator->prefix.toUpper() == dbIterator->prefix.toUpper() )
+            {
+                if ( eagleIterator->package.toUpper().contains(dbIterator->package.toUpper()) ) // match contains...
+                {
+                    if ( eagleIterator->value.toUpper().contains(dbIterator->value.toUpper()) ) // match contains...
+                    {
+                        reject = false;
+                        digiBomPart.partName = partName;  // if multiple parts, this will get reset but maintain correctness
+                        digiBomPart.partNumToleranceList.valueList.append(dbIterator->value); // add value to list
+                        digiBomPart.partNumToleranceList.digiKeyPartNumberList.append(dbIterator->partnum); // add new partnumber to list
+                        digiBomPart.partNumToleranceList.toleranceList.append(dbIterator->tolerance); // add corresponding tolerance description
+                        if ( BomPartList.isEmpty()) {
+                            BomPartList.append(digiBomPart);
+                        }
+                        else if ( BomPartList.last() != digiBomPart ) // if last in list is not this, insert it
+                        {
+                            BomPartList.append(digiBomPart);
+                        }
+                        else { // update it
+                            BomPartList.pop_back();
+                            BomPartList.append(digiBomPart);
+                        }
+                    }
+                }
+            }
+        }
+        if ( reject ) // print string indicating we need to manually go get a part number
+        {
+            // For parts that do not match, prep the line for the digikey file, but replace the digikey part number with the value found earlier (e.g., XTAL3-CSM-12)
+            printf("1, ,%s%d  | value: %s, package: %s | Please find a digikey P\\N for this part!\n",
+                   eagleIterator->prefix.toStdString().c_str(), eagleIterator->identifier,
+                   eagleIterator->value.toStdString().c_str(), eagleIterator->package.toStdString().c_str());
+        }
+        else // print out digikey p\n info
+        {
+            if ( digiBomPart.partNumToleranceList.digiKeyPartNumberList.length() != 1 ) // multiple part warning
+            {
+                printf("WARNING: Multiple parts [%d] found for part %s\n", digiBomPart.partNumToleranceList.digiKeyPartNumberList.length(),
+                       digiBomPart.partName.toStdString().c_str());
+                printf("\t1,,%s\n", digiBomPart.partName.toStdString().c_str());
+                QList<QString>::iterator partNumIter;
+                QList<QString>::iterator toleranceIter;
+                QList<QString>::iterator valueIter;
+                for(partNumIter = digiBomPart.partNumToleranceList.digiKeyPartNumberList.begin(),
+                    toleranceIter = digiBomPart.partNumToleranceList.toleranceList.begin(),
+                    valueIter = digiBomPart.partNumToleranceList.valueList.begin();
+                    partNumIter != digiBomPart.partNumToleranceList.digiKeyPartNumberList.end() &&
+                    toleranceIter != digiBomPart.partNumToleranceList.toleranceList.end() &&
+                    toleranceIter != digiBomPart.partNumToleranceList.valueList.end();
+                    ++partNumIter, ++toleranceIter, ++valueIter)
+                {
+                    printf("\t\tValue: %s, Tolerance: %s, Digikey P\\N: %s\n", valueIter->toStdString().c_str(),
+                           toleranceIter->toStdString().c_str(), partNumIter->toStdString().c_str());
+                }
+            }
+            else // unique part match found
+            {
+                printf("1,%s,%s\n", digiBomPart.partNumToleranceList.digiKeyPartNumberList.last().toStdString().c_str(), digiBomPart.partName.toStdString().c_str());
+            }
+        }
     }
 
+    file.close();
+    printf("Done processing file...\n");
 }
 
 void MainWindow::on_edit_new_type_editingFinished()

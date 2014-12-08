@@ -19,8 +19,8 @@ class DatabaseEntry
 public:
 
     // class functions
-    DatabaseEntry();
-    ~DatabaseEntry();
+    DatabaseEntry() {};
+    ~DatabaseEntry() {};
 
     // data members
     int id;
@@ -38,12 +38,57 @@ class SqlCallbackContainer
 public:
 
     // class functions
-    SqlCallbackContainer();
-    ~SqlCallbackContainer();
+    SqlCallbackContainer() {};
+    ~SqlCallbackContainer() {};
 
     // data members
     QList<DatabaseEntry> *pDbContents;
     QHash<QString,QString> *pPrefixLookup;
+};
+
+class EaglePart
+{
+public:
+    EaglePart() {};
+    ~EaglePart() {};
+
+    int identifier;
+    QString prefix;
+    QString value;
+    QString package;
+};
+
+class DigikeyPartAndTolerance
+{
+public:
+    DigikeyPartAndTolerance() {};
+    ~DigikeyPartAndTolerance() {};
+
+    QList<QString> valueList;
+    QList<QString> toleranceList;
+    QList<QString> digiKeyPartNumberList;
+};
+
+class DigikeyBOMPart
+{
+public:
+
+    DigikeyBOMPart() {};
+    ~DigikeyBOMPart() {};
+
+    bool operator == (const DigikeyBOMPart &rh)
+    {
+        return (rh.partName == partName);
+    };
+
+    bool operator != (const DigikeyBOMPart &rh)
+    {
+        return !(rh.partName == partName);
+    };
+
+    QString partName;
+     // tolerance and part numbers are paired
+    DigikeyPartAndTolerance partNumToleranceList;
 };
 
 class MainWindow : public QMainWindow
@@ -97,6 +142,7 @@ private:
     QList<DatabaseEntry> dbContents;
     QHash<QString,QString> PrefixLookup;
     SqlCallbackContainer sqlContainer;
+    QList<EaglePart> eaglePartsList;
 
     // sqlite callback
     static int callback(void *data, int argc, char **argv, char **azColName);
