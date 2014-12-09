@@ -770,10 +770,10 @@ void MainWindow::on_actionImport_BOM_triggered()
             for ( partNumIter = partListIter->part.partNumToleranceList.digiKeyPartNumberList.begin(),
                   toleranceIter = partListIter->part.partNumToleranceList.toleranceList.begin(),
                   valueIter = partListIter->part.partNumToleranceList.valueList.begin();
-                  partNumIter != partListIter->part.partNumToleranceList.digiKeyPartNumberList.end(),
-                  toleranceIter != partListIter->part.partNumToleranceList.toleranceList.end(),
+                  partNumIter != partListIter->part.partNumToleranceList.digiKeyPartNumberList.end() &&
+                  toleranceIter != partListIter->part.partNumToleranceList.toleranceList.end() &&
                   valueIter != partListIter->part.partNumToleranceList.valueList.end();
-                  ++partNumIter, ++valueIter, ++valueIter )
+                  ++partNumIter, ++toleranceIter, ++valueIter )
             {
                 printf("\t\tValue: %s, Tolerance: %s, Digikey P\\N: %s\n", valueIter->toStdString().c_str(),
                        toleranceIter->toStdString().c_str(), partNumIter->toStdString().c_str());
