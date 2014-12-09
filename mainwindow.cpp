@@ -550,6 +550,7 @@ void MainWindow::on_btn_add_component_clicked()
     }
     sqlite3_close(connDB);
 
+    dbContents.clear(); // blow away as it will be repopulated in a sec
     UpdateDataFromDb(pathToSqlDb);
 
     ui->edit_new_package->clear();
@@ -559,6 +560,10 @@ void MainWindow::on_btn_add_component_clicked()
     ui->edit_tolerance->clear();
     ui->edit_partnum->clear();
     ui->edit_comments->clear();
+    ui->comboBox_add_package->setCurrentIndex(0);
+    ui->comboBox_add_package->setCurrentIndex(0);
+    ui->edit_prefix->setVisible(false);
+    ui->lbl_disp_new_eagle_prefix->setVisible(false);
 }
 
 void MainWindow::on_tabWidget_tabBarClicked(int index)
@@ -660,27 +665,43 @@ void MainWindow::on_actionImport_BOM_triggered()
         snprintf(partName, 64, "%s%d", eagleIterator->prefix.toStdString().c_str(), eagleIterator->identifier);
         reject = true;  // init
 
+        //printf("looking up part for %s\n", partName);
+
         for ( dbIterator = dbContents.begin(); dbIterator != dbContents.end(); ++dbIterator ) // look in our database for a match
         {
-            if ( eagleIterator->prefix.toUpper() == dbIterator->prefix.toUpper() )
+            //printf(" is %s/%s a match?\n", dbIterator->type.toStdString().c_str(), dbIterator->value.toStdString().c_str());
+
+            if ( eagleIterator->prefix.toUpper() == dbIterator->prefix.toUpper() ) // must be exact match
             {
+                //printf("  prefix %s matches %s\n", eagleIterator->prefix.toStdString().c_str(),
+                //       dbIterator->prefix.toStdString().c_str());
+
                 if ( eagleIterator->package.toUpper().contains(dbIterator->package.toUpper()) ) // match contains...
                 {
-                    if ( eagleIterator->value.toUpper().contains(dbIterator->value.toUpper()) ) // match contains...
+                    //printf("   package %s matches %s\n", eagleIterator->package.toStdString().c_str(),
+                    //       dbIterator->package.toStdString().c_str());
+
+                    if ( eagleIterator->value.toUpper() == dbIterator->value.toUpper() ) // must be exact match
                     {
+                        //printf("    value %s matches %s\n", eagleIterator->value.toStdString().c_str(),
+                        //       dbIterator->value.toStdString().c_str());
+
                         reject = false;
                         digiBomPart.partName = partName;  // if multiple parts, this will get reset but maintain correctness
                         digiBomPart.partNumToleranceList.valueList.append(dbIterator->value); // add value to list
                         digiBomPart.partNumToleranceList.digiKeyPartNumberList.append(dbIterator->partnum); // add new partnumber to list
                         digiBomPart.partNumToleranceList.toleranceList.append(dbIterator->tolerance); // add corresponding tolerance description
                         if ( BomPartList.isEmpty()) {
+                            //printf("     appending part to empty part list\n");
                             BomPartList.append(digiBomPart);
                         }
                         else if ( BomPartList.last() != digiBomPart ) // if last in list is not this, insert it
                         {
+                            //printf("     appending part to non-empty part list where last != this\n");
                             BomPartList.append(digiBomPart);
                         }
                         else { // update it
+                            //printf("     updating part in non-empty part list where last == this\n");
                             BomPartList.pop_back();
                             BomPartList.append(digiBomPart);
                         }
@@ -726,6 +747,46 @@ void MainWindow::on_actionImport_BOM_triggered()
     file.close();
 
     // TODO: Group parts like C1,C5,C6 that are the same, but make a note if multiple tolerances are found
+/*
+ * class DigikeyPartAndTolerance
+{
+public:
+    DigikeyPartAndTolerance() {};
+    ~DigikeyPartAndTolerance() {};
+
+    QList<QString> valueList;
+    QList<QString> toleranceList;
+    QList<QString> digiKeyPartNumberList;
+};
+
+class DigikeyBOMPart
+{
+public:
+
+    DigikeyBOMPart() {};
+    ~DigikeyBOMPart() {};
+
+    bool operator == (const DigikeyBOMPart &rh)
+    {
+        return (rh.partName == partName);
+    };
+
+    bool operator != (const DigikeyBOMPart &rh)
+    {
+        return !(rh.partName == partName);
+    };
+
+    QString partName;
+     // tolerance and part numbers are paired
+    DigikeyPartAndTolerance partNumToleranceList;
+};
+
+BomPartList.append(digiBomPart)
+DigikeyBOMPart digiBomPart
+
+*/
+
+
 
 
 
@@ -737,6 +798,7 @@ void MainWindow::on_edit_new_type_editingFinished()
 {
     ui->lbl_disp_new_eagle_prefix->setVisible(true);
     ui->edit_prefix->setVisible(true);
+    ui->comboBox_add_type->setCurrentIndex(0);
 
 }
 
@@ -752,5 +814,32 @@ void MainWindow::on_comboBox_add_type_activated(const QString &foo)
 
 void MainWindow::on_actionCreate_New_Database_triggered()
 {
-    //CREATE TABLE parts (id integer primary key, type text, value text, package text, tolerance text, partnum text, comments text, prefix text);
+    QString newDbName = QFileDialog::getSaveFileName(this, tr("New Database"),
+                            "/home", tr("Sqlite3 database (*.sl3)"));
+    if (!newDbName.endsWith(".sl3"))
+    {
+        newDbName = newDbName + ".sl3";
+    }
+
+    int sqlReturn;
+    int rc;
+    char *zErrMsg = NULL;
+    sqlite3 *newDbConn;
+    QString createCmd = "CREATE TABLE parts (id integer primary key, type text, value text, package text, tolerance text, partnum text, comments text, prefix text);";
+
+    sqlReturn = sqlite3_open_v2(newDbName.toStdString().c_str(), &newDbConn, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
+    if ( sqlReturn )
+    {
+        printf("sqlite3_open returned failure\n");
+        return;
+    }
+
+    /* Execute SQL statement */
+    rc = sqlite3_exec(newDbConn, createCmd.toStdString().c_str(), NULL, &sqlContainer, &zErrMsg);
+    if( rc != SQLITE_OK )
+    {
+        printf("SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+    sqlite3_close(newDbConn);
 }
