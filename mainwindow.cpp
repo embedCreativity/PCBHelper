@@ -10,6 +10,11 @@ int MainWindow::callback(void *container, int argc, char **argv, char **azColNam
     QList<DatabaseEntry> *pDbContents = ((SqlCallbackContainer *)container)->pDbContents;
     QHash<QString,QString> *pPrefixLookup = ((SqlCallbackContainer *)container)->pPrefixLookup;
 
+    if ( argc == 0 )
+    {
+    printf("in callback. argc = %d. Bailing\n", argc);
+    }
+
     for(i=0; i<argc; i++){
         //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
         ColName = azColName[i];
