@@ -62,6 +62,13 @@ class DigikeyPartAndTolerance
 {
 public:
     DigikeyPartAndTolerance() {};
+    DigikeyPartAndTolerance(const DigikeyPartAndTolerance &rh)
+    {
+        valueList = rh.valueList;
+        toleranceList = rh.toleranceList;
+        digiKeyPartNumberList = rh.digiKeyPartNumberList;
+    };
+
     ~DigikeyPartAndTolerance() {};
 
     QList<QString> valueList;
@@ -74,6 +81,12 @@ class DigikeyBOMPart
 public:
 
     DigikeyBOMPart() {};
+    DigikeyBOMPart (const DigikeyBOMPart &rh)
+    {
+        partName = rh.partName;
+        partNumToleranceList = rh.partNumToleranceList;
+    };
+
     ~DigikeyBOMPart() {};
 
     bool operator == (const DigikeyBOMPart &rh)
@@ -89,6 +102,21 @@ public:
     QString partName;
      // tolerance and part numbers are paired
     DigikeyPartAndTolerance partNumToleranceList;
+};
+
+class uniquePartListEntry
+{
+public:
+    uniquePartListEntry() {};
+    uniquePartListEntry(const uniquePartListEntry &rh)
+    {
+          count = rh.count;
+          part = rh.part;
+    };
+    ~uniquePartListEntry() {};
+
+    int count;
+    DigikeyBOMPart part;
 };
 
 class MainWindow : public QMainWindow
