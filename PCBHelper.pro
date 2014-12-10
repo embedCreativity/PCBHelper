@@ -13,10 +13,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    sqlite3.c
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    sqlite3.h \
+    sqlite3ext.h
 
 FORMS    += mainwindow.ui
-
-LIBS += -lsqlite3
