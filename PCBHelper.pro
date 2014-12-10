@@ -21,3 +21,6 @@ HEADERS  += mainwindow.h \
     sqlite3ext.h
 
 FORMS    += mainwindow.ui
+
+# Icon file reference
+RC_FILE = myapp.rc
