@@ -6,6 +6,8 @@
 #include <sqlite3.h>
 #include <QList>
 #include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
 #include <QHash>
 
 namespace Ui {

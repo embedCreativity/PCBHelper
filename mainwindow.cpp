@@ -676,6 +676,8 @@ void MainWindow::on_actionImport_BOM_triggered()
     bool reject;
     QList<uniquePartListEntry> partList;
     QList<uniquePartListEntry>::iterator partListIter;
+    QString fileOutput = "";
+    char buf[16] = "";
 
     for (eagleIterator = eaglePartsList.begin(); eagleIterator != eaglePartsList.end(); ++eagleIterator ) // for each part we found
     {
@@ -718,9 +720,9 @@ void MainWindow::on_actionImport_BOM_triggered()
         if ( reject ) // No match in database. Print string indicating we need to manually go get a part number
         {
             // For parts that do not match, prep the line for the digikey file, but replace the digikey part number with the value found earlier (e.g., XTAL3-CSM-12)
-            printf("1, ,%s%d  | value: %s, package: %s | Please find a digikey P\\N for this part!\n",
-                   eagleIterator->prefix.toStdString().c_str(), eagleIterator->identifier,
-                   eagleIterator->value.toStdString().c_str(), eagleIterator->package.toStdString().c_str());
+            snprintf(buf, 16, "%d", eagleIterator->identifier);
+            fileOutput = fileOutput + "1, ," + eagleIterator->prefix + buf + " | value: " + eagleIterator->value +
+                   ", package: " + eagleIterator->package + " | Please find a digikey P\\N for this part!\n";
         }
         else // part info found from our database for this part. Put in our aggregate list.
         {
@@ -755,14 +757,16 @@ void MainWindow::on_actionImport_BOM_triggered()
     } // end for each eagle part in bom...
     file.close();
 
+    fileOutput = fileOutput + "\n\n"; // separate good data from warnings above
+
     // print out summary of parts found
     for ( partListIter = partList.begin(); partListIter != partList.end(); ++partListIter )
     {
         if ( partListIter->part.partNumToleranceList.digiKeyPartNumberList.length() != 1 ) // multiple part warning
         {
-            printf("WARNING: Multiple parts [%d] found for part(s): %s\n",
-                   partListIter->part.partNumToleranceList.digiKeyPartNumberList.length(),
-                   partListIter->part.partName.toStdString().c_str());
+            snprintf(buf, 16, "%d", partListIter->part.partNumToleranceList.digiKeyPartNumberList.length());
+            fileOutput = fileOutput + "WARNING: Multiple parts [" + buf +
+                   "] found for part(s): " + partListIter->part.partName + "\n";
             // TODO: take code from below and move up here
             QList<QString>::iterator partNumIter;
             QList<QString>::iterator toleranceIter;
@@ -775,18 +779,37 @@ void MainWindow::on_actionImport_BOM_triggered()
                   valueIter != partListIter->part.partNumToleranceList.valueList.end();
                   ++partNumIter, ++toleranceIter, ++valueIter )
             {
-                printf("\t\tValue: %s, Tolerance: %s, Digikey P\\N: %s\n", valueIter->toStdString().c_str(),
-                       toleranceIter->toStdString().c_str(), partNumIter->toStdString().c_str());
+                fileOutput = fileOutput + "\t\tValue: " + valueIter->toStdString().c_str() + ", Tolerance: " + toleranceIter->toStdString().c_str() +
+                        ", Digikey P\\N: " + partNumIter->toStdString().c_str() + "\n";
             } // end for
 
         } // end if
         else // unique part found
         {
-            printf("%d,%s,%s\n", partListIter->count, partListIter->part.partNumToleranceList.digiKeyPartNumberList.first().toStdString().c_str(),
-                   partListIter->part.partName.toStdString().c_str());
+            snprintf(buf, 16, "%d", partListIter->count);
+            fileOutput = fileOutput + buf + "," + partListIter->part.partNumToleranceList.digiKeyPartNumberList.first() +
+                    "," + partListIter->part.partName + "\n";
         }
 
     } //end for
+
+    //printf("%s", fileOutput.toStdString().c_str());
+
+    QFileInfo getDir(pathToEagleBom);
+
+    QString outputFileName = QFileDialog::getSaveFileName(this, tr("Output Digikey File"),
+                            getDir.absolutePath(), tr("Digikey Parts File (*.digi)"));
+    if (!outputFileName.endsWith(".digi"))
+    {
+        outputFileName = outputFileName + ".digi";
+    }
+
+    // Write data out to file
+    QFile outputFile(outputFileName);
+    outputFile.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&outputFile);
+    out << fileOutput;
+    outputFile.close();
 
     printf("Done processing file...\n");
 }
