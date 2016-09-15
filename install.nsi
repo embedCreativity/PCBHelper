@@ -26,12 +26,21 @@ SetOutPath $INSTDIR
 File PCBHelper.exe
 
 ; Also get the Qt dependent DLLs
+File D3Dcompiler_47.dll
+File libEGL.dll
 File libgcc_s_dw2-1.dll
+File libGLESV2.dll
 File libstdc++-6.dll
 File libwinpthread-1.dll
-File Qt5Cored.dll
-File Qt5Guid.dll
-File Qt5Widgetsd.dll
+File opengl32sw.dll
+File Qt5Core.dll
+File Qt5Gui.dll
+File Qt5Svg.dll
+File Qt5Widgets.dll
+CreateDirectory "$INSTDIR\platforms"
+SetOutPath "$INSTDIR\platforms"
+File /r "platforms\"
+SetOutPath $INSTDIR
 
 ; Create Start Menu Objects
 CreateDirectory "$SMPROGRAMS\MarkTaylor"
@@ -48,12 +57,20 @@ Section "Uninstall"
 
 Delete $INSTDIR\Uninstall.exe
 Delete $INSTDIR\PCBHelper.exe
+
+Delete $INSTDIR\D3Dcompiler_47.dll
+Delete $INSTDIR\libEGL.dll
 Delete $INSTDIR\libgcc_s_dw2-1.dll
+Delete $INSTDIR\libGLESV2.dll
 Delete $INSTDIR\libstdc++-6.dll
 Delete $INSTDIR\libwinpthread-1.dll
-Delete $INSTDIR\Qt5Cored.dll
-Delete $INSTDIR\Qt5Guid.dll
-Delete $INSTDIR\Qt5Widgetsd.dll
+Delete $INSTDIR\opengl32sw.dll
+Delete $INSTDIR\Qt5Core.dll
+Delete $INSTDIR\Qt5Gui.dll
+Delete $INSTDIR\Qt5Svg.dll
+Delete $INSTDIR\Qt5Widgets.dll
+Delete $INSTDIR\platforms\qwindows.dll
+RMDir $INSTDIR\platforms
 
 RMDir $INSTDIR
 
