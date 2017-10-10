@@ -22,6 +22,11 @@ database (e.g., you put a regulator on the board, but do not have a matching reg
 TODO (someday or by someone else): 
   Remove the C++ objects used to contain the database information 
 and make use of multiple SQL calls to refine output as the user selects options throughout the GUI.
+
   Place the output of the dropdown boxes in a sorted order.
+  
   Create and use a config file that saves the preferred location of the user's part database so the user 
-  doesn't need to locate the db file every time the user opens the application.
+    doesn't need to locate the db file every time the user opens the application.
+    
+  Add a method of removing parts from the database. No one wants to do this from the command line using sqlite3.
+  
